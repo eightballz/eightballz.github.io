@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vote Submission</title>
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: sans-serif;
+    }
+    .container {
+      border: 1px solid #fff;
+      padding: 20px;
+      width: 350px;
+      margin: 50px auto;
+      border-radius: 8px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+    select, button {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      background: #000;
+      color: #fff;
+      border: 1px solid #fff;
+    }
+    button {
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Vote Assignment</h2>
+    <form id="voteForm">
+      <label for="votingCountry">Your Country:</label>
+      <select id="votingCountry" required>
+        <option value="">— select your country —</option>
+      </select>
+      <div id="pointsSelectors"></div>
+    </form>
+    <button id="submitBtn">Submit Vote</button>
+  </div>
+
+  <script>
+    const webhookURL = 'https://discord.com/api/webhooks/1386899169293111406/L-nW_JIl-8Q-TTLT2DyXK3MJWPWQeg6NRvqy9S8kJNDFMW7nUxxGra6EwSvsNq4Z7BDM';
+
+    const countries = [
+      'Tavmania', 'Stanilla', 'Moonfall', 'Vaskora',
+      'Dravaria', 'Ellashia', 'Xenuvia', 'Yveron'
+    ];
+    const points = [12, 10, 8, 6, 4, 2];
+
+    const votingCountrySelect = document.getElementById('votingCountry');
+    const formDiv = document.getElementById('pointsSelectors');
+
+    // Populate voting country selector
+    countries.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      votingCountrySelect.appendChild(opt);
+    });
+
+    // Build point selectors
+    const selects = {};
+    points.forEach(pt => {
+      const label = document.createElement('label');
+      label.textContent = `${pt} points to:`;
+
+      const select = document.createElement('select');
+      select.name = `pts${pt}`;
+      select.dataset.pt = pt;
+      select.innerHTML = `<option value="">— select —</option>` +
+        countries.map(c => `<option value="${c}">${c}</option>`).join('');
+      selects[pt] = select;
+
+      select.addEventListener('change', enforceUniqueChoices);
+
+      formDiv.appendChild(label);
+      formDiv.appendChild(select);
+    });
+
+    // When voting country is changed, prevent self-voting
+    votingCountrySelect.addEventListener('change', () => {
+      enforceUniqueChoices();
+    });
+
+    // Prevent duplicate or self-votes
+    function enforceUniqueChoices() {
+      const selectedValues = Object.values(selects).map(s => s.value).filter(v => v);
+      const votingCountry = votingCountrySelect.value;
+
+      Object.values(selects).forEach(sel => {
+        const current = sel.value;
+        Array.from(sel.options).forEach(opt => {
+          if (
+            opt.value &&
+            opt.value !== current &&
+            (selectedValues.includes(opt.value) || opt.value === votingCountry)
+          ) {
+            opt.disabled = true;
+          } else {
+            opt.disabled = false;
+          }
+        });
+      });
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const votingCountry = votingCountrySelect.value;
+      if (!votingCountry) {
+        alert("Please select the country that is voting.");
+        return;
+      }
+
+      const voteData = {};
+      let complete = true;
+
+      for (let pt of points) {
+        const val = selects[pt].value;
+        if (!val) complete = false;
+        voteData[pt] = val;
+      }
+
+      if (!complete) {
+        alert("Please select a country for each point value.");
+        return;
+      }
+
+      if (Object.values(voteData).includes(votingCountry)) {
+        alert("You cannot vote for your own country.");
+        return;
+      }
+
+      // Format message
+      let message = `🗳️ **${votingCountry} votes:**\n`;
+      for (let pt of points) {
+        message += `**${pt} points** to ${voteData[pt]}\n`;
+      }
+
+      // Send to Discord
+      try {
+        await fetch(webhookURL, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ content: message })
+        });
+        alert("Vote submitted successfully!");
+        votingCountrySelect.value = "";
+        Object.values(selects).forEach(s => s.value = "");
+        enforceUniqueChoices();
+      } catch (err) {
+        console.error(err);
+        alert("Error submitting vote.");
+      }
+    });
+  </script>
+
+</body>
+</html>
