@@ -59,7 +59,6 @@
     const votingCountrySelect = document.getElementById('votingCountry');
     const formDiv = document.getElementById('pointsSelectors');
 
-    // Populate voting country selector
     countries.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c;
@@ -67,7 +66,6 @@
       votingCountrySelect.appendChild(opt);
     });
 
-    // Build point selectors
     const selects = {};
     points.forEach(pt => {
       const label = document.createElement('label');
@@ -86,12 +84,10 @@
       formDiv.appendChild(select);
     });
 
-    // When voting country is changed, prevent self-voting
     votingCountrySelect.addEventListener('change', () => {
       enforceUniqueChoices();
     });
 
-    // Prevent duplicate or self-votes
     function enforceUniqueChoices() {
       const selectedValues = Object.values(selects).map(s => s.value).filter(v => v);
       const votingCountry = votingCountrySelect.value;
@@ -112,7 +108,6 @@
       });
     }
 
-    // Retry function to submit vote up to 3 times
     async function submitVoteWithRetry(message) {
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
@@ -124,11 +119,11 @@
 
           if (!response.ok) throw new Error(`Attempt ${attempt} failed with status ${response.status}`);
 
-          return; // Success: exit function
+          return; 
         } catch (error) {
           console.warn(`Vote submission attempt ${attempt} failed:`, error);
-          if (attempt === 3) throw error; // On last attempt, rethrow error
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 sec before retrying
+          if (attempt === 3) throw error; 
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
     }
@@ -159,7 +154,6 @@
         return;
       }
 
-      // Format message
       let message = `🗳️ **${votingCountry} votes:**\n`;
       for (let pt of points) {
         message += `**${pt} points** to ${voteData[pt]}\n`;
