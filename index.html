@@ -49,7 +49,7 @@
   </div>
 
   <script>
-    const webhookURL = 'https://discord.com/api/webhooks/1386899169293111406/L-nW_JIl-8Q-TTLT2DyXK3MJWPWQeg6NRvqy9S8kJNDFMW7nUxxGra6EwSvsNq4Z7BDM';
+    const relayURL = 'https://infinivisionbackend.onrender.com/submit-vote';
 
     const countries = [
       'Orphanox', 'Phantomosia', 'Dubrisia', 'Maridia', 'Parisphoniea', 'Frankonista', 'Maristunia', 'Amara', 'Aireus', 'Ories', 'Tinarus', 'Truva', 'Valeria', 'Zepyria', 'Crownland', 
@@ -144,13 +144,18 @@
         message += `**${pt} points** to ${voteData[pt]}\n`;
       }
 
-      // Send to Discord
+      // Send to relay server instead of direct Discord webhook
       try {
-        await fetch(webhookURL, {
+        const response = await fetch(relayURL, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ content: message })
         });
+
+        if (!response.ok) {
+          throw new Error("Failed to submit vote");
+        }
+
         alert("Vote submitted successfully!");
         votingCountrySelect.value = "";
         Object.values(selects).forEach(s => s.value = "");
